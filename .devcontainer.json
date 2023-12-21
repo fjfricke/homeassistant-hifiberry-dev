@@ -38,5 +38,8 @@
     "remoteUser": "vscode",
     "features": {
         "ghcr.io/devcontainers/features/rust:1": {}
-    }
+    },
+    "runArgs": [
+        "--network=host"
+    ]
 }

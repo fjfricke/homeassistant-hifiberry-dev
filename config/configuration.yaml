@@ -1,8 +1,16 @@
 # https://www.home-assistant.io/integrations/default_config/
 default_config:
 
+# http:
+#   server_host: 0.0.0.0
+#   server_port: 8080
+
 # https://www.home-assistant.io/integrations/logger/
 logger:
   default: info
   logs:
-    custom_components.integration_blueprint: debug
+    custom_components.hifiberry: debug
+
+# media_player:
+#   - platform: mpd
+#     host: laut.local

@@ -1,0 +1,25 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "port": "Port",
+                    "authtoken": "authtoken",
+                    "use_mpd": "Use MPD for media playback?",
+                    "mpd_port": "MPD Port",
+                    "mpd_password": "MPD Password"
+                }
+            }
+        }
+    },
+    "title": "hifiberry"
+}
