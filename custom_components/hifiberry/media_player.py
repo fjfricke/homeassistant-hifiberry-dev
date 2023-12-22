@@ -5,6 +5,7 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 from socket import gaierror
 from typing import Any
+import aiohttp
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
@@ -323,6 +324,16 @@ class HifiberryMediaPlayer(MediaPlayerEntity):
     async def async_turn_off(self):
         return await self._audiocontrol2.poweroff()
 
+    async def restore_source(self, source):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{self._base_url}/api/player/activate/org.mpris.MediaPlayer2.{source}") as response:
+                if response.status != 200:
+                    log_level = logging.DEBUG
+                    _LOGGER.log(
+                        log_level, "Error restoring source: %s", response.status
+                    )
+                return
+
     async def async_play_media(
         self,
         media_type: MediaType | str,
@@ -330,6 +341,20 @@ class HifiberryMediaPlayer(MediaPlayerEntity):
         announce: bool | None = None,
         **kwargs: Any
     ) -> None:
+
+        async def wait_until_mpd_paused():
+            playing = False
+            stopped = False
+            while not (playing and stopped):
+                state = (await self._mpd_client.status()).get("state")
+                print(state)
+                if state == "play":
+                    playing = True
+                if playing:
+                    if state != "play":
+                        stopped = True
+                await asyncio.sleep(0.1)
+
         """Send the media player the command for playing a playlist."""
         async with self.mpd_connection():
             if media_source.is_media_source_id(media_id):
@@ -342,6 +367,18 @@ class HifiberryMediaPlayer(MediaPlayerEntity):
             if media_type == MediaType.PLAYLIST:
                 _LOGGER.warning("Playlist is unsupported.")
             else:
+                # announce = True
+                need_state_restore = False
+                if announce and self.state == STATE_PLAYING:
+                    need_state_restore = True
+                    last_source = self.source
+                    last_volume = self.volume_level
+                    await self.async_media_pause()
+                    await self.async_set_volume_level(0.4)
                 await self._mpd_client.clear()
                 await self._mpd_client.add(media_id)
                 await self._mpd_client.play()
+                if need_state_restore:
+                    await wait_until_mpd_paused()
+                    await self.async_set_volume_level(last_volume)
+                    await self.restore_source(last_source)
